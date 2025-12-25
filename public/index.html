@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Feliz Navidad — Noche de Paz</title>
+  <meta name="description" content="Tarjeta de Navidad (Noche de Paz). Deja tu nombre y aparece en el muro." />
+  <style>
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:#fff;
+      background: radial-gradient(900px 600px at 25% 20%, #1b4d8a 0%, #071a2b 45%, #04101b 100%);
+      padding:18px;
+    }
+    .card{
+      width:min(820px, 92vw);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:22px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      padding:22px;
+    }
+    .badge{
+      display:inline-flex; gap:10px; align-items:center;
+      padding:9px 12px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      font-size:14px;
+    }
+    h1{margin:14px 0 6px; font-size: clamp(28px, 5vw, 44px);}
+    p{margin:0; color: rgba(255,255,255,.86); line-height:1.5}
+    .row{display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:18px;}
+    @media (max-width:780px){ .row{grid-template-columns:1fr;} }
+    .panel{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px;
+      padding:16px;
+      background: rgba(0,0,0,.18);
+    }
+    input{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      outline:none;
+      margin-top:10px;
+    }
+    button{
+      margin-top:10px;
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,210,122,.16);
+      color:#fff;
+      cursor:pointer;
+    }
+    .small{font-size:13px; color: rgba(255,255,255,.65); margin-top:10px}
+    .ok{margin-top:10px; font-size:13px; color: rgba(200,243,255,.95)}
+    .err{margin-top:10px; font-size:13px; color: rgba(255,180,180,.95)}
+    a{color: rgba(200,243,255,.92)}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">🎄 24 de diciembre · Noche de Paz</div>
+    <h1>Feliz Navidad ✨</h1>
+    <p>Que esta noche sea tranquila, llena de amor, esperanza y momentos bonitos con quienes más quieres.</p>
+
+    <div class="row">
+      <div class="panel">
+        <p><strong>Deja tu nombre</strong> (queda guardado para el “muro”):</p>
+        <input id="nombre" maxlength="40" placeholder="Ej: Daniel, Mamá, Familia Pérez" />
+        <button id="enviar">Enviar</button>
+        <div id="estado" class="small">No pedimos correo, solo nombre.</div>
+      </div>
+
+      <div class="panel">
+        <p><strong>Noche de Paz, noche de amor…</strong></p>
+        <p style="margin-top:10px">
+          Gracias por estar. Que el corazón se te llene de calma y alegría,
+          y que el nuevo año traiga salud, trabajo y bendiciones. 🌟
+        </p>
+        <p class="small" style="margin-top:12px">
+          Ver el muro: <a href="/muro.html">/muro.html</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const btn = document.getElementById("enviar");
+  const input = document.getElementById("nombre");
+  const estado = document.getElementById("estado");
+
+  btn.addEventListener("click", async () => {
+    const nombre = input.value.trim();
+    if(!nombre){
+      estado.className = "err";
+      estado.textContent = "Escribe tu nombre 🙂";
+      return;
+    }
+
+    btn.disabled = true;
+    estado.className = "small";
+    estado.textContent = "Enviando...";
+
+    try{
+      const res = await fetch("/.netlify/functions/submit-name", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ nombre })
+      });
+
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(data?.error || "Error");
+
+      estado.className = "ok";
+      estado.textContent = "¡Listo! Tu nombre quedó guardado ✅";
+      input.value = "";
+    }catch(e){
+      estado.className = "err";
+      estado.textContent = "No se pudo enviar. Intenta otra vez.";
+    }finally{
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

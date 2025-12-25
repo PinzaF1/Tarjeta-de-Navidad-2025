@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Muro de nombres — Navidad</title>
+  <style>
+    body{margin:0; min-height:100vh; font-family:system-ui; background:#071a2b; color:#fff; padding:18px;}
+    .box{max-width:900px; margin:0 auto; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:16px;}
+    h1{margin:0 0 8px}
+    .small{color:rgba(255,255,255,.65); font-size:13px}
+    ul{margin:12px 0 0; padding:0; list-style:none; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;}
+    @media(max-width:780px){ul{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:520px){ul{grid-template-columns:1fr}}
+    li{padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.18)}
+    a{color: rgba(200,243,255,.92)}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Muro de nombres 🎄</h1>
+    <div class="small">Se actualiza con los nombres que van dejando en la tarjeta.</div>
+    <div class="small" style="margin-top:6px"><a href="/">Volver a la tarjeta</a></div>
+
+    <ul id="lista"></ul>
+    <div id="estado" class="small" style="margin-top:12px">Cargando...</div>
+  </div>
+
+<script>
+  // CAMBIA ESTO:
+  const RAW_URL = "https://raw.githubusercontent.com/TUUSUARIO/TUREPO/main/data/nombres.json";
+
+  const lista = document.getElementById("lista");
+  const estado = document.getElementById("estado");
+
+  fetch(RAW_URL, { cache: "no-store" })
+    .then(r => r.ok ? r.json() : [])
+    .then(items => {
+      if(!Array.isArray(items)) items = [];
+      estado.textContent = items.length ? `Total: ${items.length}` : "Aún no hay nombres.";
+      lista.innerHTML = items.slice().reverse().map(x => `<li>${escapeHtml(x.nombre)}</li>`).join("");
+    })
+    .catch(() => {
+      estado.textContent = "No pude cargar el archivo aún (revisa RAW_URL o que exista nombres.json).";
+    });
+
+  function escapeHtml(str){
+    return (str||"").replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+</script>
+</body>
+</html>
