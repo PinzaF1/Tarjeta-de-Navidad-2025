@@ -6,6 +6,8 @@
   <title>Feliz Navidad — Noche de Paz</title>
   <meta name="description" content="Tarjeta de Navidad (Noche de Paz). Deja tu nombre y aparece en el muro." />
   <style>
+    *{ box-sizing: border-box; } /* ✅ evita que input se desborde */
+
     body{
       margin:0; min-height:100vh; display:grid; place-items:center;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
@@ -20,6 +22,7 @@
       border-radius:22px;
       box-shadow: 0 20px 60px rgba(0,0,0,.35);
       padding:22px;
+      overflow:hidden; /* ✅ por si algo intenta sobresalir */
     }
     .badge{
       display:inline-flex; gap:10px; align-items:center;
@@ -27,6 +30,7 @@
       border:1px solid rgba(255,255,255,.16);
       background: rgba(0,0,0,.18);
       font-size:14px;
+      max-width:100%;
     }
     h1{margin:14px 0 6px; font-size: clamp(28px, 5vw, 44px);}
     p{margin:0; color: rgba(255,255,255,.86); line-height:1.5}
@@ -37,9 +41,14 @@
       border-radius:16px;
       padding:16px;
       background: rgba(0,0,0,.18);
+      overflow:hidden; /* ✅ evita bordes raros */
+      min-width:0;     /* ✅ importantísimo en grids */
     }
+
     input{
       width:100%;
+      max-width:100%;
+      display:block;
       padding:12px 12px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.18);
@@ -47,7 +56,9 @@
       color:#fff;
       outline:none;
       margin-top:10px;
+      min-width:0; /* ✅ evita que el input “empuje” el panel */
     }
+
     button{
       margin-top:10px;
       width:100%;
@@ -57,7 +68,9 @@
       background: rgba(255,210,122,.16);
       color:#fff;
       cursor:pointer;
+      display:block;
     }
+
     button:disabled{opacity:.6; cursor:not-allowed}
     .small{font-size:13px; color: rgba(255,255,255,.65); margin-top:10px}
     .ok{margin-top:10px; font-size:13px; color: rgba(200,243,255,.95)}
@@ -174,7 +187,6 @@
 
   btn.addEventListener("click", enviar);
 
-  // Enviar con Enter
   input.addEventListener("keydown", (e) => {
     if(e.key === "Enter") enviar();
   });
