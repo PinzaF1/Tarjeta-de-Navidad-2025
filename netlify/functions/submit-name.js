@@ -1,5 +1,3 @@
-// netlify/functions/submit-name.js
-
 exports.handler = async (event) => {
   try {
     if (event.httpMethod !== "POST") {
@@ -17,26 +15,21 @@ exports.handler = async (event) => {
     const filePath = process.env.GITHUB_FILE_PATH || "data/nombres.json";
 
     if (!token || !owner || !repo) {
-      return json(500, { error: "Faltan variables: GITHUB_TOKEN / OWNER / REPO" });
+      return json(500, { error: "Faltan variables: GITHUB_TOKEN / GITHUB_OWNER / GITHUB_REPO" });
     }
 
-    // ✅ IMPORTANTE: NO uses encodeURIComponent para paths con "/"
-    // GitHub necesita /contents/data/nombres.json (con slash real)
-    const safePath = filePath
-      .split("/")
-      .map(encodeURIComponent)
-      .join("/");
-
+    // ✅ Importante: NO encodear el path completo, solo por segmentos
+    const safePath = filePath.split("/").map(encodeURIComponent).join("/");
     const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${safePath}`;
 
-    // ✅ IMPORTANTE: Fine-grained tokens funcionan mejor con "Bearer"
+    // ✅ Fine-grained tokens: usar Bearer
     const headers = {
       "Authorization": `Bearer ${token}`,
       "Accept": "application/vnd.github+json",
       "User-Agent": "navidad-card"
     };
 
-    // 1) leer archivo actual si existe
+    // 1) leer archivo (si existe)
     let sha = null;
     let list = [];
 
@@ -53,21 +46,11 @@ exports.handler = async (event) => {
       list = [];
     } else {
       const t = await getRes.text();
-      return json(getRes.status, {
-        error: "GitHub GET falló",
-        details: t.slice(0, 220)
-      });
+      return json(getRes.status, { error: "GitHub GET falló", details: t.slice(0, 240) });
     }
 
-    // anti spam simple
-    const last = list[list.length - 1]?.nombre;
-    if (last && last.toLowerCase() === nombre.toLowerCase()) {
-      return json(200, { ok: true, note: "repetido seguido" });
-    }
-
+    // 2) guardar
     list.push({ nombre, created_at: new Date().toISOString() });
-
-    // limitar
     if (list.length > 1500) list = list.slice(list.length - 1500);
 
     const newContent = Buffer.from(JSON.stringify(list, null, 2)).toString("base64");
@@ -87,25 +70,20 @@ exports.handler = async (event) => {
 
     if (!putRes.ok) {
       const t = await putRes.text();
-      return json(putRes.status, {
-        error: "GitHub PUT falló",
-        details: t.slice(0, 260)
-      });
+      return json(putRes.status, { error: "GitHub PUT falló", details: t.slice(0, 260) });
     }
 
     return json(200, { ok: true });
   } catch (e) {
-    return json(500, { error: "Error interno", details: String(e).slice(0, 180) });
+    return json(500, { error: "Error interno", details: String(e).slice(0, 200) });
   }
 };
 
 function json(statusCode, body) {
   return {
     statusCode,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8"
-    },
-    body: JSON.stringify(body)
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify(body),
   };
 }
 
