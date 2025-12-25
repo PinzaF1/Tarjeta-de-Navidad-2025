@@ -116,7 +116,7 @@
       });
 
       const data = await res.json().catch(()=>({}));
-      if(!res.ok) throw new Error(data?.error || "Error");
+      if(!res.ok) throw new Error((data?.error || "Error") + " — " + (data?.details || ""));
 
       estado.className = "ok";
       estado.textContent = "¡Listo! Tu nombre quedó guardado ✅";
