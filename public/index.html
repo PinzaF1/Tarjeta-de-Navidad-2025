@@ -58,10 +58,19 @@
       color:#fff;
       cursor:pointer;
     }
+    button:disabled{opacity:.6; cursor:not-allowed}
     .small{font-size:13px; color: rgba(255,255,255,.65); margin-top:10px}
     .ok{margin-top:10px; font-size:13px; color: rgba(200,243,255,.95)}
     .err{margin-top:10px; font-size:13px; color: rgba(255,180,180,.95)}
     a{color: rgba(200,243,255,.92)}
+    .debug{
+      margin-top:8px;
+      font-size:12px;
+      color: rgba(255,255,255,.70);
+      white-space:pre-wrap;
+      word-break:break-word;
+      opacity:.9;
+    }
   </style>
 </head>
 <body>
@@ -76,6 +85,7 @@
         <input id="nombre" maxlength="40" placeholder="Ej: Daniel, Mamá, Familia Pérez" />
         <button id="enviar">Enviar</button>
         <div id="estado" class="small">No pedimos correo, solo nombre.</div>
+        <div id="debug" class="debug" style="display:none"></div>
       </div>
 
       <div class="panel">
@@ -95,9 +105,32 @@
   const btn = document.getElementById("enviar");
   const input = document.getElementById("nombre");
   const estado = document.getElementById("estado");
+  const debugBox = document.getElementById("debug");
 
-  btn.addEventListener("click", async () => {
+  async function safeReadBody(res){
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    if(ct.includes("application/json")){
+      const j = await res.json().catch(()=>null);
+      return { json: j, text: null };
+    }
+    const t = await res.text().catch(()=> "");
+    return { json: null, text: t };
+  }
+
+  function setDebug(text){
+    if(!text){
+      debugBox.style.display = "none";
+      debugBox.textContent = "";
+      return;
+    }
+    debugBox.style.display = "block";
+    debugBox.textContent = text;
+  }
+
+  async function enviar(){
     const nombre = input.value.trim();
+    setDebug("");
+
     if(!nombre){
       estado.className = "err";
       estado.textContent = "Escribe tu nombre 🙂";
@@ -115,18 +148,35 @@
         body: JSON.stringify({ nombre })
       });
 
-      const data = await res.json().catch(()=>({}));
-      if(!res.ok) throw new Error((data?.error || "Error") + " — " + (data?.details || ""));
+      const body = await safeReadBody(res);
+
+      if(!res.ok){
+        const apiError = body.json?.error || "Error";
+        const details = body.json?.details || (body.text ? body.text.slice(0, 200) : "");
+        estado.className = "err";
+        estado.textContent = "No se pudo enviar ❌";
+        setDebug(`Status: ${res.status}\n${apiError}${details ? ("\n" + details) : ""}`);
+        return;
+      }
 
       estado.className = "ok";
       estado.textContent = "¡Listo! Tu nombre quedó guardado ✅";
       input.value = "";
+      setDebug("");
     }catch(e){
       estado.className = "err";
-      estado.textContent = "No se pudo enviar. Intenta otra vez.";
+      estado.textContent = "No se pudo enviar ❌";
+      setDebug(String(e));
     }finally{
       btn.disabled = false;
     }
+  }
+
+  btn.addEventListener("click", enviar);
+
+  // Enviar con Enter
+  input.addEventListener("keydown", (e) => {
+    if(e.key === "Enter") enviar();
   });
 </script>
 </body>
